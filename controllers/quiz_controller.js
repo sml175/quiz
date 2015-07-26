@@ -20,13 +20,13 @@ exports.index = function(req, res) {
       //findAll().then(function(quizes) {
       res.render('quizes/index.ejs', {quizes: quizes, errors: []});
   }
- );
+ ).catch(function(error){next(error)});
 };
 
 // GET /quizes/:id
 exports.show = function(req, res) {
-  res.render('quizes/show', { quiz: req.quiz});
-};            // req.quiz: instancia de quiz cargada con autoload
+  res.render('quizes/show', { quiz: req.quiz,  errors: []});
+};
 
 // GET /quizes/:id/answer
 exports.answer = function(req, res) {
@@ -49,14 +49,24 @@ exports.new = function(req, res) {
     {pregunta: "Pregunta", respuesta: "Respuesta"}
   );
 
-  res.render('quizes/new', {quiz: quiz});
+  res.render('quizes/new', {quiz: quiz,  errors: []});
 };
 
 // POST /quizes/create
 exports.create = function(req, res) {
   var quiz = models.Quiz.build( req.body.quiz );
 
-  quiz.save({fields: ["pregunta", "respuesta"]}).then(function(){
-      res.redirect('/quizes');
-    })
+  quiz
+  .validate()
+  .then(
+    function(err){
+      if (err) {
+        res.render('quizes/new', {quiz: quiz, errors: err.errors});
+      } else {
+        quiz // save: guarda en DB campos pregunta y respuesta de quiz
+        .save({fields: ["pregunta", "respuesta"]})
+        .then( function(){ res.redirect('/quizes')})
+      }      // res.redirect: Redirección HTTP a lista de preguntas
+    }
+  ).catch(function(error){next(error)});
 };
