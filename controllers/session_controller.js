@@ -21,9 +21,7 @@ exports.create = function(req, res) {
     var login     = req.body.login;
     var password  = req.body.password;
 
-    console.log('Voyyyyyyy');
     var userController = require('./user_controller');
-    console.log('Yaaaaa');
     userController.autenticar(login, password, function(error, user) {
 
         if (error) {  // si hay error retornamos mensajes de error de sesión
@@ -35,7 +33,6 @@ exports.create = function(req, res) {
         // Crear req.session.user y guardar campos   id  y  username
         // La sesión se define por la existencia de:    req.session.user
         req.session.user = {id:user.id, username:user.username, isAdmin:user.isAdmin};
-
         res.redirect(req.session.redir.toString());// redirección a path anterior a login
     });
 };
@@ -45,3 +42,33 @@ exports.destroy = function(req, res) {
     delete req.session.user;
     res.redirect(req.session.redir.toString()); // redirect a path anterior a login
 };
+
+exports.autologout = function(req, res, next) {
+     var segundos = 60;
+     var miliSegundos = 6000;
+
+     //Usuario logado
+     if(req.session.user){
+         //Si no existe marca de tiempo inicial
+         if(!req.session.tiempo){
+             req.session.tiempo = (new Date()).getTime();
+             //Fijamos el nº de segundos de espera para finalizar sesión
+             req.session.tiempoEspera  = segundos;
+         }else{
+             //Si el tiempo de espera se ha sobrepasado
+             if((new Date()).getTime() - req.session.tiempo > miliSegundos){
+                //Borramos el usuario
+                delete req.session.user;
+                //Borramos la marca de tiempo
+                delete req.session.tiempo;
+                res.redirect('/login');
+                return;
+             //Si no se ha sobrepasado el tiempo de espera
+             }else{
+                req.session.tiempo = (new Date()).getTime();
+                req.session.tiempoEspera = segundos;
+             }
+        }
+    }
+    next();
+  };
