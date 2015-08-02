@@ -44,8 +44,8 @@ exports.destroy = function(req, res) {
 };
 
 exports.autologout = function(req, res, next) {
-     var segundos = 60;
-     var miliSegundos = 6000;
+     var segundos = 120;
+     var miliSegundos = 120000;
 
      //Usuario logado
      if(req.session.user){
